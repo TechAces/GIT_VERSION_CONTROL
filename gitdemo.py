@@ -21,83 +21,167 @@ def hash_file(filename):
 
 
 def handle_init():
-    global flag
-    flag=1
+    # global flag
+    # flag=1
     path=os.getcwd()
-    path1=path+"/git/object"
-    path2=path+"/git/refs"
-    path3=path+"/git/index"
+
+    path1=path+"/git/version/v_1"
+    file=path+"/git/version/v_1/index.txt"
+    file_v=path+"/git/ver.txt"
     try:
         os.makedirs(path1,0o777,exist_ok=False)
-        os.makedirs(path2,0o777,exist_ok=False)
-        os.makedirs(path3,0o777,exist_ok=False)
     except OSError:
         print ("Creation of the directory %s failed" % path)
     else:
         print ("Successfully created the directory %s " % path)
 
+    fv=open(file_v,"w")
+    fv.write(str(1)+"\n")
+    fv.close()
+
+    findex=open(file,"w")
+    findex.close()
+
+
 
 def handle_add_dot():
-    global flag
-    filelist=[]
+    # global flag
     path=os.getcwd()
+    #print(path)
+    #print(glob.glob(path))
+    fv=open(path+"/git/ver.txt","r")
+    data=fv.readline().strip()
+    fv.close()
+    v_no=str(data)
+
+    path1=path+"/git/version/v_"+v_no
+    ind_file=path1+"/index.txt"
+    
+    findex=open(ind_file,"r")
+    data=findex.readlines()
+    findex.close()
+
+    map={}
+    for line in data:
+        l_file=line.split()
+        map[l_file[0]]=l_file[1]
+
     dirs = os.listdir( path )
     for file in dirs:
         checkfile=path+"/"+file
         if(os.path.isfile(checkfile)):
-            message = hash_file(file)
-            checkpath=path+"/git/refs/"+message
-            if(os.path.exists(checkpath)):
-                continue
+            sha1 = hash_file(file)
+            if(map.get(file)==None):
+                map[file]=sha1
+                shutil.copy(file,path1+"/"+file)
             else:
-                try:
-                    os.makedirs(checkpath,0o777,exist_ok=False)
-                except OSError:
-                    print ("Creation of the directory %s failed" % path)
-                shutil.copy(file,checkpath)
+                if(map.get(file)==sha1):
+                    continue
+                else:
+                    map[file]=sha1
+                    shutil.copy(file,path1+"/"+file)
 
-def handle_add_file(file_name):
-    global flag
-    filelist=[]
+    findex=open(ind_file,"w")
+    for k,v in map.items():
+        findex.write(str(k)+" "+str(v)+"\n")
+
+    findex.close()
+
+
+
+def handle_add_file(file):
+    # global flag
     path=os.getcwd()
-    # dirs = os.listdir( path )
-    # for file in dirs:
-    checkfile=path+"/"+file_name
+    #print(path)
+    #print(glob.glob(path))
+    fv=open(path+"/git/ver.txt","r")
+    data=fv.readline().strip()
+    fv.close()
+    v_no=str(data)
+
+    path1=path+"/git/version/v_"+v_no
+    ind_file=path1+"/index.txt"
+    
+    findex=open(ind_file,"r")
+    data=findex.readlines()
+    findex.close()
+
+    map={}
+    for line in data:
+        l_file=line.split()
+        map[l_file[0]]=l_file[1]
+
+    
+    checkfile=path+"/"+file
     if(os.path.isfile(checkfile)):
-        message = hash_file(file)
-        checkpath=path+"/git/refs/"+message
-        if(os.path.exists(checkpath)):
-            pass
+        sha1 = hash_file(file)
+        if(map.get(file)==None):
+            map[file]=sha1
+            shutil.copy(file,path1+"/"+file)
         else:
-            try:
-                os.makedirs(checkpath,0o777,exist_ok=False)
-            except OSError:
-                print ("Creation of the directory %s failed" % path)
-            shutil.copy(file,checkpath)
+            if(map.get(file)==sha1):
+                pass
+            else:
+                map[file]=sha1
+                shutil.copy(file,path1+"/"+file)
+
+    findex=open(ind_file,"w")
+    for k,v in map.items():
+        findex.write(str(k)+" "+str(v)+"\n")
+
+    findex.close()
+    
 
 
 
 def handle_status():
     path=os.getcwd()
-        #print(path)
-        #print(glob.glob(path))
-    dirs = os.listdir( path )
+    #print(path)
+    #print(glob.glob(path))
+    fv=open(path+"/git/ver.txt","r")
+    data=fv.readline().strip()
+    fv.close()
+    v_no=str(data)
+
+    # print(v_no)
+
+    path1=path+"/git/version/v_"+v_no
+    ind_file=path1+"/index.txt"
+
+    # print(ind_file)
+
+    findex=open(ind_file,"r")
+    data=findex.readlines()
+    findex.close()
+
+    map={}
+    for line in data:
+        l_file=line.split()
+        map[l_file[0]]=l_file[1]
+
+    # checkfile=path+"/"+file
+
+    untracked=[]
+    newfile=[]
+    modified=[]
+
+    dirs = os.listdir(path)
     for file in dirs:
         checkfile=path+"/"+file
         if(os.path.isfile(checkfile)):
-            message = hash_file(file)
-            checkpath=path+"/git/refs/"+message
-            if(os.path.exists(checkpath)):
-                #print("yes")
-                #message1 = hash_file(file)
-               # message2 = hash_file(checkpath)
-                #if(message1==message2):
-               #     continue
-               # else :
-                print(Fore.GREEN +file)
-                continue
+            if(map.get(file)==None):
+                print(Fore.RED+"untracked : " +file)
+                untracked.append(file)
             else:
-                print(Fore.RED +file)
+                sha1 = hash_file(file)
+                if(map.get(file)==sha1):
+                    print(Fore.GREEN+"newfile : " +file)
+                    newfile.append(file)
+                else:
+                    print(Fore.RED+"modified : " +file)
+                    modified.append(file)
+
+
 
 
 
@@ -114,6 +198,8 @@ def handle_status():
 
 
 
+
+# main program
 argc=len(argv)
 # print(argc)
 path=os.getcwd()
